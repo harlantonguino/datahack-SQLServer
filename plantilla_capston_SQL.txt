@@ -1,0 +1,201 @@
+﻿#Inicio ejercicio I - Necesito crear una BBDD 
+create database HarlanTonguino
+go
+use HarlanTonguino
+#fin
+
+#Inicio Ejercicio II
+create table Cliente(
+	IdCliente int identity(1,1) not null,
+	Nombre varchar(50) not null,
+	Apellido varchar(50) not null,
+	FNacimiento date not null,
+	Domicilio varchar(50) not null,
+	IdPais char(3) not null,
+	Telefono varchar(12),
+	Email varchar(30) not null,
+	Observaciones varchar(1000),
+	FechaAlta datetime not null,
+	constraint pk_Clientes primary key (IdCliente)
+)
+
+create table Record(
+	IdRecord int identity(1,1) not null,
+	FechaRecord date not null,
+	Observaciones varchar(1000),
+	constraint pk_Record primary key (IdRecord)
+)
+
+create table Campania(
+	IdCampania int identity(1,1) not null,
+	NombreCampaña varchar(50) not null,
+	constraint pk_Campania primary key (IdCampania)
+)
+
+create table RecordCliente(
+	IdRecord int not null,
+	IdCliente int not null,
+	IdCampania int not null,
+	constraint pk_RecordCliente primary key (IdRecord, IdCliente, IdCampania)
+)
+
+create table Pais(
+	IdPais char(3) not null,
+	NombrePais varchar(100) not null,
+	constraint pk_Pais primary key (IdPais)
+)
+
+create table HoraCaptacion(
+	IdHCaptacion int identity(1,1) not null,
+	FechaCaptacion date not null,
+	IdEstado smallint not null,
+	Observaciones varchar(1000),
+	constraint pk_HoraCaptacion primary key (IdHCaptacion)
+)
+
+create table HoraCapClienteCampania(
+	IdHCaptacion int not null,
+	IdCliente int not null,
+	IdCampania int not null,
+	constraint pk_HoraCapClienteCampania primary key (IdHCaptacion, IdCliente, IdCampania)
+)
+
+create table HorarioEstado(
+	IdEstado smallint identity(1,1) not null,
+	Descripcion varchar(50) not null,
+	constraint pk_HorarioEstado primary key (IdEstado)
+)
+
+create table Producto(
+	IdProducto int identity(1,1) not null,
+	Producto varchar(100) not null,
+	constraint pk_Producto primary key (IdProducto)
+)
+
+create table Compra(
+	IdCompra int identity(1,1) not null,
+	IdConcepto int not null,
+	Fecha datetime not null,
+	Monto money not null,
+	Observaciones varchar(1000),
+	constraint pk_Compra primary key (IdCompra)
+)
+
+create table CompraCliente(
+	IdCompra int not null,
+	IdCliente int not null,
+	IdHCaptacion int not null,
+	constraint pk_CompraCliente primary key (IdCompra, IdCliente, IdHCaptacion)
+)
+
+create table CampaniaProducto(
+	IdCampania int not null,
+	IdProducto int not null,
+	Descripcion varchar (100) not null
+	constraint pk_CampaniaProducto primary key (IdCampania, IdProducto)
+)
+
+create table ConceptoCompra(
+	IdConcepto int identity(1,1) not null,
+	Concepto varchar(100) not null,
+	constraint pk_ConceptoCompra primary key (IdConcepto)
+)
+#fin ejercicio II
+
+#Inicio Ejercicio IV.B.1 
+insert into HoraCaptacion (FechaCaptacion,IdEstado,Observaciones) values ('20240101 10:00','1','Desconocido')
+#fin ejercicio IV.B.1
+
+#Inicio Ejercicio IV.B.2 
+insert into HoraCapClienteCampania (IdHCaptacion,IdCliente,IdCampania) values ('6','1','1')
+#fin ejercicio IV.B.2
+
+#Inicio Ejercicio V
+select * from Cliente
+
+select CONCAT(Nombre,' ',Apellido) as NombreCliente from Cliente
+
+select top 3 * 
+from Cliente
+order by IdCliente ASC, FNacimiento ASC
+
+select distinct IdPais from Cliente
+
+update Cliente
+set Email = '200@gmail.es'
+where IdCliente = 1
+
+select avg(Monto) as MontoPromedio from Compra
+
+select * 
+from HoraCaptacion
+where FechaCaptacion between '20240101' and '20240130
+
+declare @IdPais char(3)
+set @IdPais = 'ESP'
+
+
+
+if @IdPais = 'ESP'
+begin
+	select * from Cliente where IdPais = @IdPais
+end
+else
+	select 'Ningun Cliente es de Nacionalidad Española' as Resultado
+
+if exists(	select * 
+		from Cliente
+		where IdPais = 'ESP')
+begin
+	select * 
+	from Cliente
+	where IdPais = 'ESP'
+end
+else
+	select 'Ningun Cliente es de Nacionalidad Española' as Resultado
+
+
+
+select 
+	*,
+	(case when IdPais = 'ESP' or IdPais = 'GRC' or IdPais = 'DEU' then 'Europa'
+		  when IdPais = 'USA' or IdPais = 'MEX' then 'NorteAmerica'
+		  when IdPais = 'BRA' then 'Suramerica'
+		  when IdPais = 'IND' then 'Asia'
+		  else 'No Registra'
+		  end) as Continente
+from cliente
+
+
+
+create proc Nuevo_cliente (
+	@Dni varchar(20),
+	@Nombre varchar(50),
+	@Apellido varchar(50),
+	@FNacimiento varchar(8),
+	@Domicilio varchar(50),
+	@IdPais char(3),
+	@Telefono varchar(12),
+	@Email varchar(30),
+	@observaciones varchar(1000),
+	@FechaAlta datetime
+)
+as
+
+if not exists(select * from Cliente where Dni=@Dni)
+begin
+	insert into cliente(Dni,Nombre,Apellido,FNacimiento,Domicilio,IdPais,Telefono,Email,Observaciones,FechaAlta)
+	values (@Dni,@Nombre,@Apellido,@FNacimiento,@Domicilio,@IdPais,@Telefono,@Email,@observaciones,@FechaAlta)
+	print 'El cliente se agrego correctamente'
+	return
+end
+else
+begin
+	print 'El cliente ya existe'
+	return
+end
+
+declare @fecha varchar(20)
+set @fecha = convert(char(8),getdate(),112) + ' ' + convert(char(5),getdate(),108)
+exec Nuevo_cliente '2351365','Raúl','Stuart','19850521','Las regasta 25','ESP','655821545','Raul@krokimail.com','',@fecha
+#fin ejercicio V
